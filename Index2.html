@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notas de Venta</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: #121a33;
+      --muted: #8aa0ff;
+      --text: #e6ecff;
+      --soft: #1b2547;
+      --ok: #22c55e;
+      --warn:#f59e0b;
+      --err:#ef4444;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 10% -10%, #1f2b55 0%, var(--bg) 45%);
+      color: var(--text);
+    }
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));border:1px solid rgba(138,160,255,.25);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .p-6{padding:24px}
+    .p-4{padding:16px}
+    .p-2{padding:8px}
+    .mt-4{margin-top:16px}
+    .mt-6{margin-top:24px}
+    .mb-2{margin-bottom:8px}
+    .mb-4{margin-bottom:16px}
+    .mb-6{margin-bottom:24px}
+    .grid{display:grid;gap:16px}
+    .grid-2{grid-template-columns: repeat(2, minmax(0,1fr))}
+    .grid-3{grid-template-columns: repeat(3, minmax(0,1fr))}
+    .grid-4{grid-template-columns: repeat(4, minmax(0,1fr))}
+    @media (max-width: 760px){.grid-2,.grid-3,.grid-4{grid-template-columns: 1fr}}
+    h1{font-size:24px;margin:0 0 10px}
+    h2{font-size:18px;margin:0 0 8px;color:#c7d2fe}
+    label{font-size:13px;color:#c7ceff;display:block;margin-bottom:6px}
+    input[type="text"], input[type="date"], input[type="number"], input[type="password"], input[type="search"], select{
+      width:100%; padding:12px 12px; border-radius:12px; border:1px solid rgba(138,160,255,.25); background: #0f1733; color: var(--text);
+      outline: none; box-shadow: inset 0 0 0 1px transparent; transition:.15s ease;
+    }
+    input[type="number"]{ -moz-appearance:textfield }
+    input:focus, select:focus{ box-shadow: inset 0 0 0 1px var(--muted); border-color: var(--muted)}
+    .row{display:flex; gap:12px; align-items:center}
+    .btn{
+      appearance:none; border:1px solid rgba(138,160,255,.35); background:linear-gradient(180deg, #2a3772, #1b2550); color:#fff; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; letter-spacing:.2px; transition: .15s ease; box-shadow:0 6px 16px rgba(0,0,0,.35)
+    }
+    .btn:hover{transform: translateY(-1px)}
+    .btn:active{transform: translateY(0)}
+    .btn-danger{background:linear-gradient(180deg, #7a1c2a,#4f1019); border-color: rgba(239,68,68,.6)}
+    .btn-ghost{background:transparent}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(138,160,255,.25);background:#0f1733;color:#c7d2fe}
+    table{width:100%;border-collapse: collapse; overflow:hidden;border-radius:14px}
+    thead th{background: #0f1733; text-align:left; font-size:12px; color:#aab4ff; padding:10px; border-bottom:1px solid rgba(138,160,255,.25)}
+    tbody td{padding:8px 10px; border-bottom:1px dashed rgba(138,160,255,.15)}
+    tfoot td{padding:10px}
+    .right{text-align:right}
+    .totals{display:grid; gap:8px;}
+    .totals .line{display:flex; justify-content:space-between; align-items:center}
+    .totals .line .label{color:#c7d2fe}
+    .totals .line .value{font-weight:700}
+    .footer{display:flex;gap:10px;flex-wrap:wrap}
+    .hidden{display:none}
+    @media print{body{background:#fff;color:#000}.no-print{display:none !important}}
+    .print-area{width: 8.5in; min-height: 11in; padding: 1in; margin: 0 auto; background:#fff; color:#000; font-family: Georgia, serif;}
+    .print-area h2{color:#000}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="loginView" class="card p-6" aria-label="Inicio de sesión">
+      <h1>Acceso — Notas de Venta</h1>
+      <div class="grid grid-2">
+        <div>
+          <label for="user">Usuario</label>
+          <input id="user" type="text" autocomplete="username" placeholder="Usuario" />
+        </div>
+        <div>
+          <label for="pass">Contraseña</label>
+          <input id="pass" type="password" autocomplete="current-password" placeholder="Contraseña" />
+        </div>
+      </div>
+      <div class="mt-6 row">
+        <button id="btnLogin" class="btn">Entrar</button>
+        <span id="loginMsg" class="badge hidden" role="status"></span>
+      </div>
+    </section>
+    <section id="appView" class="hidden mt-6">
+      <header class="card p-6">
+        <h1>Generador de Notas de Venta</h1>
+        <p style="margin:0;color:#c7d2fe">Complete los datos del cliente y agregue productos. Seleccione IVA si aplica.</p>
+      </header>
+      <div class="grid grid-3 mt-6">
+        <div class="card p-6">
+          <h2>Datos del ticket</h2>
+          <div class="grid grid-2 mt-4">
+            <div>
+              <label for="cliente">Nombre del cliente</label>
+              <input id="cliente" type="text" placeholder="Ej. Juan Pérez" />
+            </div>
+            <div>
+              <label for="fecha">Fecha</label>
+              <input id="fecha" type="date" />
+            </div>
+          </div>
+          <div class="row mt-4">
+            <label for="selIva">IVA</label>
+            <select id="selIva">
+              <option value="0">Sin IVA</option>
+              <option value="0.08">IVA 8%</option>
+              <option value="0.16">IVA 16%</option>
+            </select>
+          </div>
+        </div>
+        <div class="card p-6" style="grid-column: span 2 / span 2">
+          <h2>Productos</h2>
+          <div class="mb-2 row">
+            <button id="btnAdd" class="btn">Agregar renglón</button>
+            <button id="btnClear" class="btn btn-ghost">Limpiar todo</button>
+            <div class="badge">Renglones: <span id="rowCount">0</span></div>
+          </div>
+          <div style="overflow:auto">
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th style="width:42%">Producto / Descripción</th>
+                  <th style="width:14%">Cantidad</th>
+                  <th style="width:18%">Costo unitario</th>
+                  <th style="width:18%">Importe</th>
+                  <th style="width:8%" class="right">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card p-6">
+          <h2>Totales</h2>
+          <div class="totals mt-4">
+            <div class="line"><span class="label">Subtotal</span><span class="value" id="lblSubtotal">$0.00</span></div>
+            <div class="line"><span class="label">IVA</span><span class="value" id="lblIva">$0.00</span></div>
+            <div class="line" style="font-size:20px"><span class="label">Total</span><span class="value" id="lblTotal">$0.00</span></div>
+          </div>
+          <div class="footer mt-6">
+            <button id="btnSavePrint" class="btn">Guardar & Imprimir</button>
+            <button id="btnNuevo" class="btn btn-ghost">Nuevo ticket</button>
+          </div>
+        </div>
+        <div class="card p-6" style="grid-column: span 3 / span 3">
+          <div class="row" style="justify-content:space-between; align-items: end">
+            <h2>Tickets guardados en este equipo</h2>
+            <input id="searchSaved" type="search" placeholder="Buscar por cliente o folio" style="max-width:320px" />
+          </div>
+          <div id="savedList" class="mt-4"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <template id="rowTemplate">
+    <tr>
+      <td><input type="text" class="inp desc" placeholder="Descripción del producto" /></td>
+      <td><input type="number" class="inp qty" min="0" step="1" value="1" /></td>
+      <td><input type="number" class="inp price" min="0" step="0.01" value="0.00" /></td>
+      <td class="right mono amt">$0.00</td>
+      <td class="right"><button class="btn btn-danger btnDel">✕</button></td>
+    </tr>
+  </template>
+  <script>
+    const loginView = document.getElementById('loginView');
+    const appView   = document.getElementById('appView');
+    const loginMsg  = document.getElementById('loginMsg');
+    
+    document.getElementById('btnLogin').addEventListener('click', () => {
+      const u = document.getElementById('user').value.trim();
+      const p = document.getElementById('pass').value.trim();
+      
+      if(u === 'admin' && p === '1234'){
+        localStorage.setItem('nv_logged','1');
+        loginView.classList.add('hidden');
+        appView.classList.remove('hidden');
+        initApp();
+      } else {
+        loginMsg.textContent = 'Usuario o contraseña incorrectos';
+        loginMsg.classList.remove('hidden');
+        loginMsg.style.borderColor = 'rgba(239,68,68,.6)';
+        loginMsg.style.color = '#fecaca';
+      }
+    });
+
+    window.addEventListener('load', () => {
+      if(localStorage.getItem('nv_logged') === '1'){
+        loginView.classList.add('hidden');
+        appView.classList.remove('hidden');
+        initApp();
+      }
+    });
+
+    const fmt = n => n.toLocaleString('es-MX',{style:'currency',currency:'MXN'});
+    const todayISO = () => new Date().toISOString().slice(0,10);
+    const getTickets = () => JSON.parse(localStorage.getItem('tickets_nv')||'[]');
+    const setTickets = (arr) => localStorage.setItem('tickets_nv', JSON.stringify(arr));
+    const nextFolio = () => {const k='folio_seq_nv';const n = parseInt(localStorage.getItem(k)||'0',10)+1;localStorage.setItem(k,String(n));return n;};
+
+    function initApp(){
+      const cliente = document.getElementById('cliente');
+      const fecha   = document.getElementById('fecha');
+      const selIva  = document.getElementById('selIva');
+      const tbody   = document.getElementById('tbody');
+      const rowTmpl = document.getElementById('rowTemplate');
+      const rowCount= document.getElementById('rowCount');
+      const lblSubtotal = document.getElementById('lblSubtotal');
+      const lblIva      = document.getElementById('lblIva');
+      const lblTotal    = document.getElementById('lblTotal');
+      
+      fecha.value = todayISO();
+
+      function addRow(desc='', qty=1, price=0){
+        const row = rowTmpl.content.firstElementChild.cloneNode(true);
+        row.querySelector('.desc').value = desc;
+        row.querySelector('.qty').value = qty;
+        row.querySelector('.price').value = Number(price).toFixed(2);
+        row.querySelector('.btnDel').addEventListener('click',()=>{ row.remove(); updateTotals(); });
+        row.querySelectorAll('input').forEach(inp=> inp.addEventListener('input', updateTotals));
+        tbody.appendChild(row);
+        updateTotals();
+      }
+
+      function getItems(){
+        return [...tbody.querySelectorAll('tr')].map(r=>{
+          const d = r.querySelector('.desc').value.trim();
+          const q = parseFloat(r.querySelector('.qty').value)||0;
+          const p = parseFloat(r.querySelector('.price').value)||0;
+          return {desc:d, qty:q, price:p, importe: +(q*p)};
+        }).filter(x=>x.desc||x.qty||x.price);
+      }
+
+      function updateTotals(){
+        const items = getItems();
+        [...tbody.querySelectorAll('tr')].forEach((r,i)=>{
+          const q = parseFloat(r.querySelector('.qty').value)||0;
+          const p = parseFloat(r.querySelector('.price').value)||0;
+          r.querySelector('.amt').textContent = fmt(q*p);
+        });
+        rowCount.textContent = items.length;
+        const sub = items.reduce((a,b)=>a+b.importe,0);
+        const iva = sub * parseFloat(selIva.value);
+        const tot = sub + iva;
+        lblSubtotal.textContent = fmt(sub);
+        lblIva.textContent = fmt(iva);
+        lblTotal.textContent = fmt(tot);
+      }
+
+      document.getElementById('btnAdd').onclick = () => addRow();
+      document.getElementById('btnClear').onclick = () => { tbody.innerHTML=''; updateTotals(); };
+      document.getElementById('btnNuevo').onclick = () => { cliente.value=''; fecha.value=todayISO(); selIva.value='0'; tbody.innerHTML=''; updateTotals(); addRow(); };
+      document.getElementById('btnSavePrint').onclick = () => saveAndPrint();
+      selIva.addEventListener('change', updateTotals);
+      addRow();
+
+      function saveAndPrint(){
+        const items = getItems();
+        if(!cliente.value.trim()){ alert('Ingrese el nombre del cliente.'); return; }
+        if(items.length===0){ alert('Agregue al menos un producto.'); return; }
+        
+        const subtotal = items.reduce((a,b)=>a+b.importe,0);
+        const iva = subtotal * parseFloat(selIva.value);
+        const total = subtotal + iva;
+        const folio = nextFolio();
+        
+        const ticket = {
+          folio,
+          cliente: cliente.value.trim(),
+          fecha: fecha.value,
+          ivaPorc: parseFloat(selIva.value),
+          items,
+          subtotal,
+          iva,
+          total,
+          creado: new Date().toISOString()
+        };
+        
+        const all = getTickets();
+        all.push(ticket);
+        setTickets(all);
+        
+        // Generar vista de impresión
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Nota de Venta #${folio}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+              .header { text-align: center; margin-bottom: 20px; }
+              .info { margin-bottom: 20px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              .totals { float: right; width: 300px; }
+              .footer { margin-top: 30px; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>NOTA DE VENTA #${folio}</h1>
+            </div>
+            <div class="info">
+              <p><strong>Cliente:</strong> ${ticket.cliente}</p>
+              <p><strong>Fecha:</strong> ${new Date(ticket.fecha).toLocaleDateString('es-MX')}</p>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th>Cantidad</th>
+                  <th>Precio Unitario</th>
+                  <th>Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map(item => `
+                  <tr>
+                    <td>${item.desc}</td>
+                    <td>${item.qty}</td>
+                    <td>${fmt(item.price)}</td>
+                    <td>${fmt(item.importe)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <div class="totals">
+              <p><strong>Subtotal:</strong> ${fmt(subtotal)}</p>
+              <p><strong>IVA (${ticket.ivaPorc*100}%):</strong> ${fmt(iva)}</p>
+              <p><strong>Total:</strong> ${fmt(total)}</p>
+            </div>
+            <div class="footer">
+              <p>Gracias por su preferencia</p>
+            </div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    }
+  </script>
+</body>
+</html>
