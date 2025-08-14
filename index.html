@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notas de Venta</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f6fa;
+        margin: 0;
+        padding: 0;
+    }
+    .login-container, .app-container {
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+        background: white;
+        margin-top: 50px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+        text-align: center;
+    }
+    input, select, button {
+        padding: 10px;
+        margin: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
+    table, th, td {
+        border: 1px solid #ccc;
+    }
+    th, td {
+        padding: 8px;
+        text-align: center;
+    }
+    .hidden {
+        display: none;
+    }
+    .btn {
+        cursor: pointer;
+        background: #3498db;
+        color: white;
+        border: none;
+    }
+    .btn:hover {
+        background: #2980b9;
+    }
+</style>
+</head>
+<body>
+
+<div class="login-container" id="login-container">
+    <h1>Generador de Notas de venta</h1>
+    <input type="text" id="usuario" placeholder="Usuario"><br>
+    <input type="password" id="contraseña" placeholder="Contraseña"><br>
+    <button class="btn" onclick="login()">Ingresar</button>
+</div>
+
+<div class="app-container hidden" id="app-container">
+    <h2>Nota de Venta</h2>
+    <label>Nombre del cliente: </label><input type="text" id="nombre"><br>
+    <label>Fecha: </label><input type="date" id="fecha"><br><br>
+
+    <label>Producto: </label><input type="text" id="producto">
+    <label>Cantidad: </label><input type="number" id="cantidad" min="1" value="1">
+    <label>Costo: </label><input type="number" id="costo" min="0" step="0.01">
+    <button class="btn" onclick="agregarProducto()">Agregar</button>
+
+    <table id="tabla-productos">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Costo</th>
+                <th>Subtotal</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <br>
+    <label>IVA: </label>
+    <select id="iva" onchange="calcularTotales()">
+        <option value="0">Sin IVA</option>
+        <option value="0.08">8%</option>
+        <option value="0.16">16%</option>
+    </select><br><br>
+
+    <p>Subtotal: $<span id="subtotal">0.00</span></p>
+    <p>IVA: $<span id="iva-valor">0.00</span></p>
+    <p>Total: $<span id="total">0.00</span></p>
+
+    <button class="btn" onclick="imprimirTicket()">Imprimir Ticket</button>
+</div>
+
+<script>
+    // Usuario y contraseña ocultos de la vista pero presentes en el código
+    const USER = "admin";
+    const PASS = "1234";
+
+    let productos = [];
+
+    function login() {
+        const usuario = document.getElementById("usuario").value;
+        const contraseña = document.getElementById("contraseña").value;
+
+        if (usuario === USER && contraseña === PASS) {
+            document.getElementById("login-container").classList.add("hidden");
+            document.getElementById("app-container").classList.remove("hidden");
+        } else {
+            alert("Usuario o contraseña incorrectos");
+        }
+    }
+
+    function agregarProducto() {
+        const producto = document.getElementById("producto").value;
+        const cantidad = parseInt(document.getElementById("cantidad").value);
+        const costo = parseFloat(document.getElementById("costo").value);
+
+        if (producto && cantidad > 0 && costo >= 0) {
+            productos.push({ producto, cantidad, costo });
+            actualizarTabla();
+            calcularTotales();
+            document.getElementById("producto").value = "";
+            document.getElementById("cantidad").value = 1;
+            document.getElementById("costo").value = "";
+        } else {
+            alert("Complete todos los campos del producto");
+        }
+    }
+
+    function eliminarProducto(index) {
+        productos.splice(index, 1);
+        actualizarTabla();
+        calcularTotales();
+    }
+
+    function actualizarTabla() {
+        const tbody = document.querySelector("#tabla-productos tbody");
+        tbody.innerHTML = "";
+        productos.forEach((p, index) => {
+            let fila = `<tr>
+                <td>${p.producto}</td>
+                <td>${p.cantidad}</td>
+                <td>$${p.costo.toFixed(2)}</td>
+                <td>$${(p.cantidad * p.costo).toFixed(2)}</td>
+                <td><button onclick="eliminarProducto(${index})">Eliminar</button></td>
+            </tr>`;
+            tbody.innerHTML += fila;
+        });
+    }
+
+    function calcularTotales() {
+        let subtotal = productos.reduce((sum, p) => sum + (p.cantidad * p.costo), 0);
+        let ivaPorcentaje = parseFloat(document.getElementById("iva").value);
+        let ivaValor = subtotal * ivaPorcentaje;
+        let total = subtotal + ivaValor;
+
+        document.getElementById("subtotal").innerText = subtotal.toFixed(2);
+        document.getElementById("iva-valor").innerText = ivaValor.toFixed(2);
+        document.getElementById("total").innerText = total.toFixed(2);
+    }
+
+    function imprimirTicket() {
+        const nombre = document.getElementById("nombre").value;
+        const fecha = document.getElementById("fecha").value;
+
+        if (!nombre || !fecha) {
+            alert("Complete el nombre y la fecha");
+            return;
+        }
+
+        let datos = {
+            nombre,
+            fecha,
+            productos,
+            subtotal: document.getElementById("subtotal").innerText,
+            iva: document.getElementById("iva-valor").innerText,
+            total: document.getElementById("total").innerText
+        };
+
+        localStorage.setItem("ticket", JSON.stringify(datos));
+        window.open(window.location.href + "#ticket", "_blank");
+    }
+
+    // Si está en la vista de ticket
+    if (window.location.hash === "#ticket") {
+        document.body.innerHTML = "";
+        let ticket = JSON.parse(localStorage.getItem("ticket"));
+        let contenido = `
+            <h2>Ticket de Venta</h2>
+            <p><strong>Cliente:</strong> ${ticket.nombre}</p>
+            <p><strong>Fecha:</strong> ${ticket.fecha}</p>
+            <table border="1" cellspacing="0" cellpadding="5">
+                <tr><th>Producto</th><th>Cantidad</th><th>Costo</th><th>Subtotal</th></tr>
+        `;
+        ticket.productos.forEach(p => {
+            contenido += `<tr>
+                <td>${p.producto}</td>
+                <td>${p.cantidad}</td>
+                <td>$${p.costo.toFixed(2)}</td>
+                <td>$${(p.cantidad * p.costo).toFixed(2)}</td>
+            </tr>`;
+        });
+        contenido += `</table>
+            <p>Subtotal: $${ticket.subtotal}</p>
+            <p>IVA: $${ticket.iva}</p>
+            <p>Total: $${ticket.total}</p>
+        `;
+        document.body.innerHTML = contenido;
+        window.print();
+    }
+</script>
+
+</body>
+</html>
